@@ -1,3 +1,19 @@
+<div align="center">
+
+<img src="assets/banner.png" width="800"/>
+
+# Practical Network Security Lab
+
+![Stars](https://img.shields.io/github/stars/imranshaikh116/Practical-Network-Security-Lab?style=flat-square)
+![License](https://img.shields.io/github/license/imranshaikh116/Practical-Network-Security-Lab?style=flat-square)
+![Last Commit](https://img.shields.io/github/last-commit/imranshaikh116/Practical-Network-Security-Lab?style=flat-square)
+![Modules](https://img.shields.io/badge/modules-13-blue?style=flat-square)
+
+**Attack path → Evidence capture → Detect → Fix → Report**
+
+[Get Started](#setup) · [Modules](#modules) · [Cheat Sheet](CHEAT_SHEET.md) · [Capstone](13_redteam_capstone/)
+
+</div>
 # Practical-Network-Security-Lab
 "Practical network security training lab for reconnaissance, exploitation, detection, hardening, and red-team reporting."
 # Network Security VM Range — Offensive, Defensive, and Red-Team Lab
