@@ -1,19 +1,28 @@
 <div align="center">
 
-<img src="assets/banner.png" width="800"/>
+# 🛡️ Practical Network Security Lab
 
-# Practical Network Security Lab
+### Learn the attack path. Validate the risk. Defend the system.
 
-![Stars](https://img.shields.io/github/stars/imranshaikh116/Practical-Network-Security-Lab?style=flat-square)
-![License](https://img.shields.io/github/license/imranshaikh116/Practical-Network-Security-Lab?style=flat-square)
-![Last Commit](https://img.shields.io/github/last-commit/imranshaikh116/Practical-Network-Security-Lab?style=flat-square)
-![Modules](https://img.shields.io/badge/modules-13-blue?style=flat-square)
+A hands-on, VM-based network security range — 13 modules covering
+reconnaissance, MITM, DNS/DHCP abuse, router exploitation, cryptographic
+trust failures, web exploitation, and defense — built around a real
+attack → detect → fix workflow and finishing in a full red-team capstone.
 
-**Attack path → Evidence capture → Detect → Fix → Report**
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/imranshaikh116/Practical-Network-Security-Lab/blob/main/LICENSE)
+![GitHub stars](https://img.shields.io/github/stars/imranshaikh116/Practical-Network-Security-Lab?style=social)
+![GitHub last commit](https://img.shields.io/github/last-commit/imranshaikh116/Practical-Network-Security-Lab)
+![GitHub issues](https://img.shields.io/github/issues/imranshaikh116/Practical-Network-Security-Lab)
 
-[Get Started](#setup) · [Modules](#modules) · [Cheat Sheet](CHEAT_SHEET.md) · [Capstone](13_redteam_capstone/)
+**[Module Roadmap](#module-roadmap)** · **[Lab Setup](LAB_RANGE_SETUP.md)** · **[Cheat Sheet](CHEAT_SHEET.md)** · **[Report a Bug](../../issues)**
 
 </div>
+
+<p align="center">
+  <img src="assets/lab-topology.png" alt="Lab network topology diagram" width="600"/>
+</p>
+
+---
 # Practical-Network-Security-Lab
 "Practical network security training lab for reconnaissance, exploitation, detection, hardening, and red-team reporting."
 # Network Security VM Range — Offensive, Defensive, and Red-Team Lab
