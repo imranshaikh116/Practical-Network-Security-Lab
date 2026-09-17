@@ -1,139 +1,171 @@
-# Lab Scripts
+# Detection Scripts
 
-This folder contains small, lab-friendly Python utilities for monitoring, detecting, and summarizing network activity in a controlled VM environment.
+Four standalone Python 3 detection tools for the lab.
+No third-party packages except **scapy** (pre-installed on Kali Linux).
 
-These scripts are intended for educational and defensive analysis use in a lab network. Use them only in environments you own or are explicitly authorized to test.
+---
+
+## Install dependencies
+
+```bash
+pip install scapy
+```
+
+On Kali Linux scapy is already present — no install needed.
+
+---
 
 ## Scripts
 
-### 1) arp_monitor.py
-Purpose:
-- monitors neighbor table changes
-- identifies ARP/MAC drift
-- helps detect spoofing or MITM-style behavior
+### `arp_monitor.py` — Live ARP / MITM detector
 
-Usage:
+Polls `ip neigh` every N seconds and alerts the moment any IP's MAC address changes — the primary signature of ARP spoofing.
+
 ```bash
-python scripts/arp_monitor.py --interval 3
+# Basic run (poll every 5s)
+sudo python3 arp_monitor.py
+
+# Poll every 2s, restrict to eth0, log alerts to file
+sudo python3 arp_monitor.py --interval 2 --iface eth0 --log arp.log
+
+# Pre-load a whitelist of trusted IP→MAC pairs
+sudo python3 arp_monitor.py --whitelist whitelist.txt
 ```
 
-Example output:
-```text
-[+] Starting ARP monitor. Press Ctrl+C to stop.
-[ALERT] IP 192.168.56.10 changed from 00:11:22:33:44:55 to 00:aa:bb:cc:dd:ee
+**Whitelist format** (`whitelist.txt`):
+```
+192.168.56.1  aa:bb:cc:dd:ee:ff
+192.168.56.20 11:22:33:44:55:66
 ```
 
-What it proves:
-- a host recently changed its MAC address
-- a device may have been spoofed or replaced
-- a trust boundary is being abused at layer 2
+**What it detects:** gratuitous ARP replies, MAC binding changes, locally-administered MAC addresses.
 
 ---
 
-### 2) ssh_bruteforce_detect.py
-Purpose:
-- scans SSH logs for repeated failed authentication attempts
-- highlights a likely brute-force pattern
-- helps trigger defensive investigation
+### `ssh_bruteforce_detect.py` — SSH brute-force detector
 
-Usage:
+Parses `/var/log/auth.log` and groups failed SSH logins by source IP within a sliding time window. Raises an alert when the threshold is crossed, and a critical alert when the same IP then succeeds — the brute-force-to-compromise pattern.
+
 ```bash
-python scripts/ssh_bruteforce_detect.py /var/log/auth.log --threshold 5 --window 60
+# Parse default log with defaults (10 failures / 5 min window)
+python3 ssh_bruteforce_detect.py
+
+# Custom threshold and window
+python3 ssh_bruteforce_detect.py --threshold 5 --window 60
+
+# Follow live (like tail -f)
+sudo python3 ssh_bruteforce_detect.py --tail
+
+# Write a findings report
+python3 ssh_bruteforce_detect.py --report ssh_findings.txt
 ```
 
-Example output:
-```text
-[ALERT] SSH brute-force activity detected:
-  - IP 10.0.0.15: 7 failed attempts in 60 seconds
-```
-
-What it proves:
-- repeated credential guessing is happening
-- a source may be attacking SSH access
-- log analysis can support detection and blocking decisions
+**Alert levels:**
+- `[BRUTE-FORCE]` — IP crossed failure threshold
+- `[COMPROMISE ]` — same IP logged in successfully after brute-force alert
 
 ---
 
-### 3) dns_anomaly.py
-Purpose:
-- detects multiple answers for the same DNS query
-- highlights possible DNS spoofing or cache poisoning behavior
-- supports analysis of suspicious DNS responses
+### `dns_anomaly.py` — DNS anomaly detector
 
-Usage:
+Monitors DNS traffic (live capture or saved pcap) for:
+
+| Alert | Meaning |
+|---|---|
+| `ANSWER-MISMATCH` | Same domain returns different IPs within the time window |
+| `MULTI-ANSWER` | Single query gets >1 response packet (race injection) |
+| `UNEXPECTED-SRC` | Answer from an IP that isn't your configured resolver |
+| `HIGH-NXDOMAIN` | Unusual rate of NXDOMAIN from one source |
+| `AUTH-MISMATCH` | Local answer doesn't match authoritative (with `--verify`) |
+
 ```bash
-python scripts/dns_anomaly.py dns_records.txt
-```
+# Live capture on eth0
+sudo python3 dns_anomaly.py --iface eth0
 
-Example input:
-```text
-google.com IN A 1.1.1.1
-google.com IN A 8.8.8.8
-```
+# Analyse a saved pcap
+python3 dns_anomaly.py --pcap capture.pcap
 
-Example output:
-```text
-[ALERT] DNS anomalies detected:
-  - Query: google.com (A)
-    Answers: 1.1.1.1, 8.8.8.8
-```
+# Specify trusted resolver explicitly
+sudo python3 dns_anomaly.py --iface eth0 --resolver 192.168.56.30
 
-What it proves:
-- the same DNS name resolved to conflicting answers
-- a malicious or poisoned resolver may be active
-- trust assumptions in domain resolution are being abused
+# Cross-check answers against authoritative DNS
+sudo python3 dns_anomaly.py --iface eth0 --verify
+
+# Log alerts to file
+sudo python3 dns_anomaly.py --iface eth0 --log dns_alerts.log
+```
 
 ---
 
-### 4) pcap_summary.py
-Purpose:
-- reads a .pcap file
-- summarizes protocol distribution
-- shows top source and destination IPs
-- helps triage network activity quickly
+### `pcap_summary.py` — PCAP forensic summariser
 
-Usage:
+Reads any `.pcap` / `.pcapng` file and prints a structured report:
+
+- Protocol distribution with percentages
+- Top talkers by packet count and byte volume
+- Top destination IPs
+- Top TCP/UDP port pairs (with service names)
+- ARP table reconstructed from the capture (flags duplicate MACs)
+- DNS queries and resolved answers
+- Cleartext HTTP requests (method, host, path)
+- TLS SNI values (hostnames visible even in encrypted sessions)
+- Cleartext credential patterns (Basic Auth, FTP USER/PASS, password= params)
+
 ```bash
-python scripts/pcap_summary.py capture.pcap
+# Basic summary
+python3 pcap_summary.py capture.pcap
+
+# Show top 25 entries instead of 15
+python3 pcap_summary.py capture.pcap --top 25
+
+# Save plain-text report
+python3 pcap_summary.py capture.pcap --out report.txt
+
+# No colour (for piping)
+python3 pcap_summary.py capture.pcap --no-colour
 ```
-
-Example output:
-```text
-[+] Total packets: 15420
-[+] Protocol breakdown:
-    TCP: 9800
-    UDP: 4200
-    ICMP: 210
-    ARP: 210
-
-[+] Top source IPs:
-    192.168.56.10: 5400
-    192.168.56.20: 4100
-```
-
-What it proves:
-- which protocols dominate the traffic
-- what hosts are most active
-- where anomalies or unusual communication may be occurring
 
 ---
 
-## General usage notes
+## Suggested lab workflow
 
-- Run scripts against your own lab environment only.
-- Store command output as evidence in your workbook or final report.
-- Pair each script with a clear note:
-  - what the script shows
-  - why it matters
-  - what control or detection should respond
+```
+1. Start arp_monitor.py on the defender VM BEFORE any MITM exercise
+2. Run tcpdump -w capture.pcap on a separate terminal
+3. Execute the Module 5 / 6 / 8 lab
+4. Stop tcpdump, run pcap_summary.py on the capture
+5. Check dns_anomaly.py output if DNS exercises were involved
+6. After SSH exercises, run ssh_bruteforce_detect.py against auth.log
+7. Compare all findings — do they match what you did as the attacker?
+```
 
-## Suggested workflow
+This mirrors the real SOC workflow: generate the event, detect it from logs, correlate across tools.
 
-1. Capture evidence using tcpdump or a lab packet source
-2. run the relevant script against the artifact
-3. compare findings to expected baseline behavior
-4. record the result in your evidence log or report
+---
 
-## Security note
+## Output example — pcap_summary.py
 
-These tools are designed for controlled educational use. They are not a substitute for real production monitoring, intrusion detection, or forensic tooling in a live environment.
+```
+──────────────────────────────
+  Protocol Distribution
+──────────────────────────────
+  Ethernet         1024     100.0%
+  IP               1001      97.8%
+  TCP               880      85.9%
+  DNS               120      11.7%
+  HTTP               64       6.3%
+  TLS                56       5.5%
+  ARP                23       2.2%
+
+──────────────────────────────
+  ARP Bindings Observed
+──────────────────────────────
+  192.168.56.1    aa:bb:cc:dd:ee:ff
+  192.168.56.20   11:22:33:44:55:66, de:ad:be:ef:00:01  ← MULTIPLE MACs (ARP spoofing?)
+```
+
+---
+
+## Safety reminder
+
+Run these scripts only against traffic and log files from your own isolated lab network.
