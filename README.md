@@ -24,7 +24,6 @@ attack → detect → fix workflow and finishing in a full red-team capstone.
 
 ---
 # Practical-Network-Security-Lab
-"Practical network security training lab for reconnaissance, exploitation, detection, hardening, and red-team reporting."
 # Network Security VM Range — Offensive, Defensive, and Red-Team Lab
 
 <div align="center">
